@@ -1,1 +1,0 @@
-Self-healing RAG demo. This system classifies queries, retrieves with vector+BM25, checks retrieval quality, generates an answer, verifies claims against sources, and returns citations.

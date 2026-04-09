@@ -56,6 +56,23 @@ class Settings:
     max_retrieval_retries: int = field(default_factory=lambda: _get_env_int("MAX_RETRIEVAL_RETRIES", 2))
     max_verification_retries: int = field(default_factory=lambda: _get_env_int("MAX_VERIFICATION_RETRIES", 2))
 
+    # ---- Memory (prod knobs) ----
+    memory_enabled: bool = field(default_factory=lambda: (_get_env("MEMORY_ENABLED", "true") or "true").lower() == "true")
+    memory_top_k: int = field(default_factory=lambda: _get_env_int("MEMORY_TOP_K", 4))
+    procedural_db_path: str = field(default_factory=lambda: (_get_env("PROCEDURAL_DB_PATH", "storage/procedural_memory.sqlite") or "storage/procedural_memory.sqlite"))
+
+    # ---- Vector DB backend ----
+    vector_db: str = field(default_factory=lambda: (_get_env("VECTOR_DB", "chroma") or "chroma").lower())  # "chroma" | "qdrant"
+    qdrant_url: str = field(default_factory=lambda: (_get_env("QDRANT_URL", "http://localhost:6333") or "http://localhost:6333"))
+    qdrant_api_key: str | None = field(default_factory=lambda: _get_env("QDRANT_API_KEY"))
+    qdrant_collection_prefix: str = field(default_factory=lambda: (_get_env("QDRANT_COLLECTION_PREFIX", "rag__") or "rag__"))
+
+    # ---- API / ops ----
+    api_key: str | None = field(default_factory=lambda: _get_env("API_KEY"))
+    rate_limit: str = field(default_factory=lambda: (_get_env("RATE_LIMIT", "120/minute") or "120/minute"))
+    cors_origins: str = field(default_factory=lambda: (_get_env("CORS_ORIGINS", "*") or "*"))
+    health_check_llm: bool = field(default_factory=lambda: (_get_env("HEALTH_CHECK_LLM", "false") or "false").lower() == "true")
+
 
 _SETTINGS: Settings | None = None
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import os
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -29,8 +30,23 @@ def _hash_id(*parts: str) -> str:
 
 
 def load_text_file(path: Path) -> str:
-    # Keep it simple for demo: plaintext/markdown-ish.
-    # PDFs can be added later via a proper parser.
+    suf = path.suffix.lower()
+    if suf == ".pdf":
+        from pypdf import PdfReader
+        from pypdf.errors import PdfReadError
+
+        if path.stat().st_size == 0:
+            print(f"[ingest] skip (empty file): {path}", file=sys.stderr)
+            return ""
+        try:
+            reader = PdfReader(str(path))
+        except PdfReadError as e:
+            print(f"[ingest] skip (unreadable PDF): {path} ({e})", file=sys.stderr)
+            return ""
+        parts: list[str] = []
+        for page in reader.pages:
+            parts.append(page.extract_text() or "")
+        return "\n".join(parts)
     return path.read_text(encoding="utf-8", errors="ignore")
 
 
@@ -89,9 +105,9 @@ def ingest(*, data_dir: str, collection: str, chunk_size: int = 900, chunk_overl
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Ingest documents into Chroma")
+    parser = argparse.ArgumentParser(description="Ingest documents into the configured vector store")
     parser.add_argument("--data_dir", required=True, help="Directory containing files to ingest")
-    parser.add_argument("--collection", default="docs", help="Chroma collection name")
+    parser.add_argument("--collection", default="docs", help="Collection / index name")
     parser.add_argument("--chunk_size", type=int, default=int(os.getenv("CHUNK_SIZE", "900")))
     parser.add_argument("--chunk_overlap", type=int, default=int(os.getenv("CHUNK_OVERLAP", "150")))
     args = parser.parse_args()

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Self-healing RAG demo</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+    label { display: block; margin-top: 1rem; font-weight: 600; }
+    input, textarea, button { width: 100%; box-sizing: border-box; margin-top: 0.35rem; }
+    textarea { min-height: 100px; }
+    pre { background: #f4f4f5; padding: 1rem; overflow: auto; border-radius: 8px; font-size: 0.85rem; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <h1>Self-healing RAG</h1>
+  <p>Ask a question against your ingested <code>docs</code> collection. Optional: set <code>X-API-Key</code> if the server requires it.</p>
+
+  <label>API base (same origin)</label>
+  <input id="base" value="" placeholder="Leave empty for same origin" />
+
+  <div class="row">
+    <div>
+      <label>User ID</label>
+      <input id="userId" value="demo" />
+    </div>
+    <div>
+      <label>Collection</label>
+      <input id="collection" value="docs" />
+    </div>
+  </div>
+
+  <label>API key (optional)</label>
+  <input id="apiKey" type="password" placeholder="X-API-Key if configured" />
+
+  <label>Question</label>
+  <textarea id="q">What is this system?</textarea>
+
+  <button id="go" type="button" style="margin-top:1rem;padding:0.6rem">Run query</button>
+
+  <label>Response</label>
+  <pre id="out">{}</pre>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    $("base").value = window.location.origin;
+
+    $("go").onclick = async () => {
+      const base = $("base").value.replace(/\/$/, "") || "";
+      const body = {
+        user_id: $("userId").value || "demo",
+        collection: $("collection").value || "docs",
+        question: $("q").value,
+        return_context: true,
+      };
+      const headers = { "Content-Type": "application/json" };
+      const k = $("apiKey").value.trim();
+      if (k) headers["X-API-Key"] = k;
+
+      const res = await fetch(base + "/query", { method: "POST", headers, body: JSON.stringify(body) });
+      const text = await res.text();
+      try {
+        $("out").textContent = JSON.stringify(JSON.parse(text), null, 2);
+      } catch {
+        $("out").textContent = text;
+      }
+    };
+  </script>
+</body>
+</html>

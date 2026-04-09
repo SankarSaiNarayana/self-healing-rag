@@ -5,6 +5,35 @@ __pycache__/
 
 .chroma/
 
+storage/procedural_memory.sqlite
+storage/qdrant/
+
 # secrets (local only)
 .env
+
+
+# System files
+.DS_Store
+
+# Env
+.env
+
+# AI / editor configs
+.claude/
+.cursor/
+.cursorrules
+.windsurfrules
+.mcp.json
+.opencode.json
+
+# Data files
+data/
+*.pdf
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+*.log
 
