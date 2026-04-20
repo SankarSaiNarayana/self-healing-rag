@@ -1,16 +1,23 @@
 from __future__ import annotations
 
+import logging
 from functools import lru_cache
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
+# Default HF cache + one-time download is noisy at INFO; keep warnings visible.
+for _name in ("sentence_transformers", "transformers", "torch"):
+    logging.getLogger(_name).setLevel(logging.WARNING)
+
 
 @lru_cache(maxsize=1)
 def get_embedder(model_name: str = "sentence-transformers/all-MiniLM-L6-v2") -> SentenceTransformer:
-    # Prefer local-only load so demos work without external network.
-    # If the model isn't cached locally, SentenceTransformer may raise.
-    return SentenceTransformer(model_name, local_files_only=True)
+    # Prefer local cache (no network). If weights are missing, allow a one-time HF download.
+    try:
+        return SentenceTransformer(model_name, local_files_only=True)
+    except Exception:
+        return SentenceTransformer(model_name, local_files_only=False)
 
 
 def _hash_embed(text: str, *, dim: int = 384) -> list[float]:

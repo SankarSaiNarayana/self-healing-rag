@@ -1,0 +1,9 @@
+# Blueprint for https://render.com — create a Web Service from this repo, attach env vars in the dashboard.
+# Chroma data is on disk by default; on free dynos the filesystem is ephemeral unless you add a Render Disk
+# or switch to Qdrant Cloud (VECTOR_DB=qdrant + QDRANT_URL + key).
+services:
+  - type: web
+    name: self-healing-rag
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health

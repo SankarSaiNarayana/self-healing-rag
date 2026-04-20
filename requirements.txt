@@ -1,6 +1,6 @@
 fastapi==0.115.12
-# FastAPI 0.115.x requires starlette<0.47; 1.x removes Router(on_startup=...) and breaks FastAPI
-starlette>=0.40.0,<0.47.0
+# Pin Starlette: 1.x removes Router(on_startup=...) and breaks FastAPI 0.115 (must stay <0.47).
+starlette==0.46.2
 uvicorn[standard]==0.34.0
 pydantic==2.10.6
 python-dotenv==1.0.1
@@ -8,6 +8,8 @@ httpx==0.28.1
 numpy==2.2.4
 tqdm==4.67.1
 chromadb==0.6.3
+# Chroma 0.6.x calls posthog.capture(distinct_id, event, props); posthog 3+ changed the API.
+posthog>=2.4.0,<3
 qdrant-client==1.15.1
 sentence-transformers==3.4.1
 rank-bm25==0.2.2

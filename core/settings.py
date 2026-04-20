@@ -3,12 +3,17 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from dataclasses import field
+from pathlib import Path
 
 from dotenv import load_dotenv
 
+# Repo-root `.env` (works even when uvicorn is started from another cwd).
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+
 
 # Ensure `.env` is loaded for local/dev runs (uvicorn, scripts, etc.).
-# Environment variables already set in the shell still take precedence.
+# Variables already in the process environment are not overwritten (override=False).
+load_dotenv(_REPO_ROOT / ".env", override=False)
 load_dotenv(override=False)
 
 
@@ -72,6 +77,12 @@ class Settings:
     rate_limit: str = field(default_factory=lambda: (_get_env("RATE_LIMIT", "120/minute") or "120/minute"))
     cors_origins: str = field(default_factory=lambda: (_get_env("CORS_ORIGINS", "*") or "*"))
     health_check_llm: bool = field(default_factory=lambda: (_get_env("HEALTH_CHECK_LLM", "false") or "false").lower() == "true")
+
+    # ---- Document upload (API) ----
+    upload_max_files: int = field(default_factory=lambda: _get_env_int("UPLOAD_MAX_FILES", 12))
+    upload_max_bytes_per_file: int = field(default_factory=lambda: _get_env_int("UPLOAD_MAX_BYTES_PER_FILE", 12_000_000))
+    upload_max_total_bytes: int = field(default_factory=lambda: _get_env_int("UPLOAD_MAX_TOTAL_BYTES", 48_000_000))
+    upload_rate_limit: str = field(default_factory=lambda: (_get_env("UPLOAD_RATE_LIMIT", "20/minute") or "20/minute"))
 
 
 _SETTINGS: Settings | None = None

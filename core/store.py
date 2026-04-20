@@ -21,3 +21,20 @@ def get_all_chunks(*, collection: str) -> list[dict[str, Any]]:
 def delete_collection(*, collection: str) -> None:
     get_vectorstore().delete_collection(collection=collection)
 
+
+def delete_chunks_for_sources(*, collection: str, sources: list[str]) -> int:
+    """Remove indexed chunks whose ingested `source` matches (e.g. before re-uploading the same file)."""
+    if not sources:
+        return 0
+    want = set(sources)
+    vs = get_vectorstore()
+    rows = vs.get_all_chunks(collection=collection)
+    ids: list[str] = []
+    for r in rows:
+        meta = r.get("metadata") or {}
+        if str(meta.get("source", "")) in want:
+            ids.append(str(r["chunk_id"]))
+    if not ids:
+        return 0
+    return vs.delete_chunk_ids(collection=collection, chunk_ids=ids)
+

@@ -286,3 +286,8 @@ def retrieve_with_self_heal(
 
     return last or RetrievalResult(query=question, chunks=[], max_score=0.0, diagnostics={}), retries
 
+
+def invalidate_bm25_cache() -> None:
+    """BM25 index is memoized; call after writes so hybrid retrieval sees new chunks."""
+    _bm25_index.cache_clear()
+

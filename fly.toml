@@ -1,0 +1,21 @@
+# Fly.io — from repo root: fly launch (merge when prompted) then:
+#   fly secrets set OPENAI_BASE_URL=... OPENAI_API_KEY=... OPENAI_MODEL=...
+# Fly sets PORT (often 8080); the Dockerfile CMD already binds to $PORT.
+# For durable Chroma across restarts, create a volume and set CHROMA_DIR to the mount path.
+app = "self-healing-rag"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

@@ -21,3 +21,9 @@ def get_vectorstore() -> VectorStore:
         _STORE = ChromaVectorStore()
     return _STORE
 
+
+def reset_vectorstore() -> None:
+    """Drop cached store (tests or CHROMA_DIR / VECTOR_DB changes)."""
+    global _STORE
+    _STORE = None
+

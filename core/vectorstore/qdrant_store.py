@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, PointStruct, VectorParams
+from qdrant_client.models import Distance, PointIdsList, PointStruct, VectorParams
 
 from core.settings import get_settings
 from core.vectorstore.base import StoredChunk, VectorStore
@@ -80,6 +80,14 @@ class QdrantVectorStore(VectorStore):
             if offset is None:
                 break
         return out
+
+    def delete_chunk_ids(self, *, collection: str, chunk_ids: list[str]) -> int:
+        if not chunk_ids:
+            return 0
+        name = self._name(collection)
+        client = self._get_client()
+        client.delete(collection_name=name, points_selector=PointIdsList(points=chunk_ids))
+        return len(chunk_ids)
 
     def delete_collection(self, *, collection: str) -> None:
         name = self._name(collection)

@@ -3,68 +3,813 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Self-healing RAG demo</title>
+  <title>Self-healing RAG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
-    :root { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
-    label { display: block; margin-top: 1rem; font-weight: 600; }
-    input, textarea, button { width: 100%; box-sizing: border-box; margin-top: 0.35rem; }
-    textarea { min-height: 100px; }
-    pre { background: #f4f4f5; padding: 1rem; overflow: auto; border-radius: 8px; font-size: 0.85rem; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    @media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
+    :root {
+      --bg: #f0f2f5;
+      --surface: #ffffff;
+      --surface-2: #f8f9fb;
+      --text: #18181b;
+      --text-muted: #71717a;
+      --border: #e4e4e7;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-soft: rgba(37, 99, 235, 0.08);
+      --success: #059669;
+      --danger: #dc2626;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+      --font: "Inter", system-ui, -apple-system, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #09090b;
+        --surface: #18181b;
+        --surface-2: #27272a;
+        --text: #fafafa;
+        --text-muted: #a1a1aa;
+        --border: #3f3f46;
+        --accent: #3b82f6;
+        --accent-hover: #60a5fa;
+        --accent-soft: rgba(59, 130, 246, 0.15);
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.25);
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+    }
+
+    header {
+      margin-bottom: 1.75rem;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      margin: 0.35rem 0 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.25rem 1.35rem;
+      margin-bottom: 1rem;
+    }
+
+    .card h2 {
+      margin: 0 0 1rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+
+    .field {
+      margin-bottom: 1rem;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.35rem;
+    }
+
+    .field-hint {
+      font-size: 0.8125rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      margin: 0 0 0.5rem;
+      line-height: 1.45;
+    }
+
+    .field-hint code {
+      font-family: var(--mono);
+      font-size: 0.8em;
+      padding: 0.1em 0.35em;
+      background: var(--surface-2);
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    input[type="file"] {
+      width: 100%;
+      padding: 0.5rem 0;
+      font-size: 0.875rem;
+      color: var(--text);
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    textarea {
+      min-height: 112px;
+      resize: vertical;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--text-muted);
+      opacity: 0.85;
+    }
+
+    input:hover,
+    textarea:hover,
+    select:hover {
+      border-color: #a1a1aa;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      input:hover,
+      textarea:hover,
+      select:hover {
+        border-color: #52525b;
+      }
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    select:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 520px) {
+      .row { grid-template-columns: 1fr; }
+    }
+
+    .check {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      margin-top: 0.75rem;
+    }
+
+    .check input {
+      width: 1.05rem;
+      height: 1.05rem;
+      margin: 0.2rem 0 0;
+      accent-color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .check label {
+      margin: 0;
+      font-weight: 500;
+      font-size: 0.875rem;
+      line-height: 1.45;
+      cursor: pointer;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: background 0.15s, transform 0.05s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      padding: 0.55rem 1rem;
+      color: var(--text);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--border);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 0.75rem 1.25rem;
+      margin-top: 0.25rem;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    #sourceStatus {
+      font-size: 0.8125rem;
+      min-height: 1.35em;
+      margin: 0.5rem 0 0;
+      line-height: 1.4;
+    }
+
+    #sourceStatus.ok { color: var(--success); }
+    #sourceStatus.err { color: var(--danger); }
+
+    .badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.2rem 0.45rem;
+      border-radius: 4px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    pre#out {
+      margin: 0;
+      padding: 1rem 1.1rem;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      line-height: 1.55;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: auto;
+      max-height: min(70vh, 520px);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .actions {
+      margin-top: 1.25rem;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+
+    .response-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    details.presenter-notes {
+      margin-top: 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 0.85rem;
+      background: var(--surface-2);
+      font-size: 0.875rem;
+    }
+
+    details.presenter-notes summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    details.presenter-notes ul {
+      margin: 0.5rem 0 0 1.1rem;
+      padding: 0;
+      color: var(--text-muted);
+    }
+
+    details.presenter-notes code {
+      font-family: var(--mono);
+      font-size: 0.82em;
+      padding: 0.08em 0.3em;
+      background: var(--surface);
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    #selfHealTrace {
+      font-size: 0.875rem;
+      line-height: 1.45;
+    }
+
+    .trace-title {
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      color: var(--text);
+    }
+
+    .trace-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.65rem 1rem;
+    }
+
+    @media (min-width: 540px) {
+      .trace-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .trace-k {
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .trace-v {
+      font-weight: 500;
+    }
+
+    .trace-highlight {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .trace-hint {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-top: 0.2rem;
+      line-height: 1.4;
+    }
+
+    .trace-claims {
+      margin-top: 0.85rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .chip {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      margin-right: 0.35rem;
+      margin-top: 0.35rem;
+    }
+
+    .chip.ok {
+      background: rgba(5, 150, 105, 0.12);
+      color: var(--success);
+    }
+
+    .chip.warn {
+      background: rgba(234, 179, 8, 0.15);
+      color: #a16207;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .chip.warn {
+        color: #fbbf24;
+      }
+    }
+
+    .chip.bad {
+      background: rgba(220, 38, 38, 0.12);
+      color: var(--danger);
+    }
   </style>
 </head>
 <body>
-  <h1>Self-healing RAG</h1>
-  <p>Ask a question against your ingested <code>docs</code> collection. Optional: set <code>X-API-Key</code> if the server requires it.</p>
+  <div class="wrap">
+    <header>
+      <h1>Self-healing RAG</h1>
+      <p>Upload documents, index them, then query with optional source filtering and retrieval settings.</p>
+      <details class="presenter-notes">
+        <summary>How to showcase “self-healing” in a live demo</summary>
+        <ul>
+          <li><strong>Vector store</strong> (Chroma or Qdrant) holds your <strong>document index</strong> (embeddings + text chunks). That is the “database” for retrieval. <strong>Self-healing is not a separate DB</strong>—it is extra logic that runs <strong>on each question</strong>.</li>
+          <li><strong>Heal 1 — retrieval</strong>: point at <strong>Retrieval retries</strong> in the trace panel. If it is above zero, the pipeline widened search after the first pass looked weak.</li>
+          <li><strong>Heal 2 — verification</strong>: point at <strong>Verification retries</strong> and <strong>Claim checks</strong>. If verification retries are above zero, it re-fetched evidence and regenerated when too many answer sentences were not supported by the retrieved text.</li>
+          <li><strong>Grounding</strong>: in the JSON below, open <code>claims</code> to show each sentence linked to a source chunk (or flagged).</li>
+        </ul>
+      </details>
+    </header>
 
-  <label>API base (same origin)</label>
-  <input id="base" value="" placeholder="Leave empty for same origin" />
+    <section class="card" aria-labelledby="conn-heading">
+      <h2 id="conn-heading">Connection</h2>
+      <div class="field">
+        <label for="base">API base URL</label>
+        <input id="base" type="text" placeholder="Same origin if empty" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="apiKey">API key</label>
+        <input id="apiKey" type="password" placeholder="Optional — sent as X-API-Key" autocomplete="current-password" />
+      </div>
+    </section>
 
-  <div class="row">
-    <div>
-      <label>User ID</label>
-      <input id="userId" value="demo" />
-    </div>
-    <div>
-      <label>Collection</label>
-      <input id="collection" value="docs" />
-    </div>
+    <section class="card" aria-labelledby="ctx-heading">
+      <h2 id="ctx-heading">Context</h2>
+      <div class="row">
+        <div class="field">
+          <label for="userId">User ID</label>
+          <input id="userId" value="demo" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="collection">Collection</label>
+          <input id="collection" value="docs" spellcheck="false" />
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="up-heading">
+      <h2 id="up-heading">Upload documents</h2>
+      <p class="field-hint">
+        Adds files to the <strong>collection</strong> above as <code>uploads/&lt;filename&gt;</code>. Supported: <code>.txt</code>, <code>.md</code>, <code>.pdf</code>. Re-uploading the same filename replaces its old chunks.
+      </p>
+      <div class="field">
+        <label for="fileInput">Files</label>
+        <input id="fileInput" type="file" multiple accept=".txt,.md,.markdown,.pdf,text/plain,text/markdown,application/pdf" />
+      </div>
+      <div class="btn-row">
+        <button id="uploadBtn" class="btn-secondary" type="button">Upload &amp; index</button>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="src-heading">
+      <h2 id="src-heading">Source filter</h2>
+      <p class="field-hint">
+        Limit retrieval to chunks whose <code>source</code> path contains your text. Load the list for this collection, pick one, or type a fragment (e.g. a filename).
+      </p>
+      <div class="btn-row">
+        <button id="loadSources" class="btn-secondary" type="button">Load sources</button>
+      </div>
+      <div id="sourceStatus" role="status" aria-live="polite"></div>
+      <div class="field">
+        <label for="sourcePick">Pick from index</label>
+        <select id="sourcePick" disabled>
+          <option value="">— Load sources first —</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="sourceHint">Filter text</label>
+        <input id="sourceHint" type="text" placeholder="e.g. Learnings Doc or reports/q1.pdf" spellcheck="false" />
+      </div>
+      <div class="check">
+        <input id="autoSource" type="checkbox" />
+        <label for="autoSource">When filter is empty, auto-pick the best matching source from the index</label>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="adv-heading">
+      <h2 id="adv-heading">Retrieval</h2>
+      <div class="row">
+        <div class="field">
+          <label for="topK">top_k</label>
+          <input id="topK" type="number" min="1" max="50" placeholder="Default" />
+        </div>
+        <div class="field">
+          <label for="bm25K">bm25_k</label>
+          <input id="bm25K" type="number" min="1" max="200" placeholder="Default" />
+        </div>
+      </div>
+      <div class="check">
+        <input id="rerank" type="checkbox" checked />
+        <label for="rerank">Rerank merged results</label>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="q-heading">
+      <h2 id="q-heading">Question</h2>
+      <div class="field">
+        <textarea id="q" aria-labelledby="q-heading">What is this system?</textarea>
+      </div>
+      <div class="actions">
+        <button id="go" class="btn-primary" type="button">Run query</button>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="trace-heading">
+      <h2 id="trace-heading">Self-healing trace</h2>
+      <p class="field-hint" id="traceHint">Run a query above. This panel shows retrieval retries, verification retries, and claim checks so a live audience can see the two “heal” loops without reading raw JSON.</p>
+      <div id="selfHealTrace" aria-live="polite"></div>
+    </section>
+
+    <section class="card" aria-labelledby="out-heading">
+      <div class="response-head">
+        <h2 id="out-heading" class="section-title">Response</h2>
+        <span class="badge" id="outMeta">JSON</span>
+      </div>
+      <pre id="out">{}</pre>
+    </section>
   </div>
-
-  <label>API key (optional)</label>
-  <input id="apiKey" type="password" placeholder="X-API-Key if configured" />
-
-  <label>Question</label>
-  <textarea id="q">What is this system?</textarea>
-
-  <button id="go" type="button" style="margin-top:1rem;padding:0.6rem">Run query</button>
-
-  <label>Response</label>
-  <pre id="out">{}</pre>
 
   <script>
     const $ = (id) => document.getElementById(id);
+
     $("base").value = window.location.origin;
+
+    function apiHeaders(extra) {
+      const headers = { ...extra };
+      const k = $("apiKey").value.trim();
+      if (k) headers["X-API-Key"] = k;
+      return headers;
+    }
+
+    function setSourceStatus(msg, kind) {
+      const el = $("sourceStatus");
+      el.textContent = msg;
+      el.classList.remove("ok", "err");
+      if (kind === "ok") el.classList.add("ok");
+      if (kind === "err") el.classList.add("err");
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function clearSelfHealTrace(msg) {
+      const box = $("selfHealTrace");
+      const hint = $("traceHint");
+      if (hint) {
+        hint.style.display = "";
+        hint.textContent = msg || "Run a query above…";
+      }
+      if (box) box.innerHTML = "";
+    }
+
+    function renderSelfHealTrace(d) {
+      const box = $("selfHealTrace");
+      const hint = $("traceHint");
+      if (!box) return;
+      if (hint) hint.style.display = "none";
+      const r = d.retries || {};
+      const rt = Number(r.retrieval || 0);
+      const vt = Number(r.verification || 0);
+      const claims = Array.isArray(d.claims) ? d.claims : [];
+      const v = claims.filter((c) => c.status === "verified").length;
+      const u = claims.filter((c) => c.status === "uncertain").length;
+      const h = claims.filter((c) => c.status === "hallucinated").length;
+      const pct = ((d.confidence ?? 0) * 100).toFixed(0);
+      const router = d.router && typeof d.router === "object" ? d.router : null;
+      const parts = [];
+      parts.push('<div class="trace-title">This request (what the audience should notice)</div>');
+      parts.push('<div class="trace-grid">');
+      parts.push(
+        `<div><span class="trace-k">Query type</span><br/><span class="trace-v">${escapeHtml(d.query_type || "—")}</span></div>`
+      );
+      parts.push(
+        `<div><span class="trace-k">Answer mode</span><br/><span class="trace-v">${d.used_llm ? "LLM synthesis" : "Extractive (no LLM / fallback)"}</span></div>`
+      );
+      parts.push(
+        `<div><span class="trace-k">Retrieval retries</span><br/><span class="trace-v"><span class="trace-highlight">${rt}</span></span><span class="trace-hint">${rt ? "Extra retrieval pass(es): query was expanded after a weak first pass." : "First retrieval pass met the quality bar."}</span></div>`
+      );
+      parts.push(
+        `<div><span class="trace-k">Verification retries</span><br/><span class="trace-v"><span class="trace-highlight">${vt}</span></span><span class="trace-hint">${vt ? "Re-retrieved and regenerated: many claims were not supported by chunks." : "No forced re-run from the claim checker."}</span></div>`
+      );
+      parts.push(`<div><span class="trace-k">Confidence</span><br/><span class="trace-v">${pct}%</span></div>`);
+      parts.push("</div>");
+      parts.push('<div class="trace-claims"><span class="trace-k">Claim checks (sentences vs. sources)</span><br/>');
+      parts.push(`<span class="chip ok">${v} verified</span>`);
+      parts.push(`<span class="chip warn">${u} uncertain</span>`);
+      parts.push(`<span class="chip bad">${h} not supported</span></div>`);
+      if (Array.isArray(d.warnings) && d.warnings.length) {
+        parts.push('<div style="margin-top:0.75rem"><span class="trace-k">Warnings</span><ul style="margin:0.35rem 0 0 1.1rem;color:var(--text-muted);font-size:0.82rem">');
+        for (const w of d.warnings) parts.push(`<li>${escapeHtml(w)}</li>`);
+        parts.push("</ul></div>");
+      }
+      if (router && router.filter_fallback) {
+        parts.push(
+          `<div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted)">Router: used full index (source filter matched no chunks).</div>`
+        );
+      }
+      box.innerHTML = parts.join("");
+    }
+
+    $("loadSources").onclick = async () => {
+      const base = $("base").value.replace(/\/$/, "") || "";
+      const col = ($("collection").value || "docs").trim();
+      const sel = $("sourcePick");
+      const btn = $("loadSources");
+      setSourceStatus("Loading…", null);
+      sel.disabled = true;
+      btn.disabled = true;
+      try {
+        const res = await fetch(base + "/collections/" + encodeURIComponent(col) + "/sources", {
+          headers: apiHeaders({}),
+        });
+        const text = await res.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          setSourceStatus("Could not parse response: " + text.slice(0, 160), "err");
+          return;
+        }
+        if (!res.ok) {
+          setSourceStatus(String(data.detail || data.message || text).slice(0, 300), "err");
+          return;
+        }
+        const sources = data.sources || [];
+        sel.innerHTML = "";
+        const opt0 = document.createElement("option");
+        opt0.value = "";
+        opt0.textContent = sources.length ? "— Select a source —" : "— No sources in index —";
+        sel.appendChild(opt0);
+        for (const s of sources) {
+          const o = document.createElement("option");
+          o.value = s;
+          o.textContent = s;
+          sel.appendChild(o);
+        }
+        sel.disabled = false;
+        setSourceStatus(`Found ${data.n ?? sources.length} source path(s) in “${col}”.`, "ok");
+      } catch (e) {
+        setSourceStatus(String(e), "err");
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    $("sourcePick").onchange = () => {
+      const v = $("sourcePick").value;
+      if (v) $("sourceHint").value = v;
+    };
+
+    $("uploadBtn").onclick = async () => {
+      const base = $("base").value.replace(/\/$/, "") || "";
+      const col = ($("collection").value || "docs").trim();
+      const inp = $("fileInput");
+      const meta = $("outMeta");
+      const btn = $("uploadBtn");
+      if (!inp.files || inp.files.length === 0) {
+        meta.textContent = "Upload";
+        $("out").textContent = "Choose one or more files (.txt, .md, .pdf) first.";
+        return;
+      }
+      const fd = new FormData();
+      for (const f of inp.files) {
+        fd.append("files", f, f.name);
+      }
+      btn.disabled = true;
+      btn.textContent = "Uploading…";
+      meta.textContent = "…";
+      try {
+        const res = await fetch(base + "/collections/" + encodeURIComponent(col) + "/documents", {
+          method: "POST",
+          headers: apiHeaders({}),
+          body: fd,
+        });
+        const text = await res.text();
+        meta.textContent = res.ok ? "Upload · " + res.status : "Error · " + res.status;
+        clearSelfHealTrace("Run a query to see the self-healing trace (retrieval + verification).");
+        try {
+          $("out").textContent = JSON.stringify(JSON.parse(text), null, 2);
+        } catch {
+          $("out").textContent = text;
+        }
+      } catch (e) {
+        meta.textContent = "Error";
+        $("out").textContent = String(e);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Upload & index";
+      }
+    };
 
     $("go").onclick = async () => {
       const base = $("base").value.replace(/\/$/, "") || "";
+      const hint = $("sourceHint").value.trim();
       const body = {
         user_id: $("userId").value || "demo",
         collection: $("collection").value || "docs",
         question: $("q").value,
         return_context: true,
+        rerank: $("rerank").checked,
+        auto_source: $("autoSource").checked,
       };
-      const headers = { "Content-Type": "application/json" };
-      const k = $("apiKey").value.trim();
-      if (k) headers["X-API-Key"] = k;
+      if (hint) {
+        body.source_hint = hint;
+        body.auto_source = false;
+      }
+      const tk = $("topK").value.trim();
+      const bk = $("bm25K").value.trim();
+      if (tk) {
+        const n = parseInt(tk, 10);
+        if (Number.isFinite(n)) body.top_k = n;
+      }
+      if (bk) {
+        const n = parseInt(bk, 10);
+        if (Number.isFinite(n)) body.bm25_k = n;
+      }
 
-      const res = await fetch(base + "/query", { method: "POST", headers, body: JSON.stringify(body) });
-      const text = await res.text();
+      const headers = apiHeaders({ "Content-Type": "application/json" });
+      const btn = $("go");
+      const meta = $("outMeta");
+      btn.disabled = true;
+      btn.textContent = "Running…";
+      meta.textContent = "…";
+
       try {
-        $("out").textContent = JSON.stringify(JSON.parse(text), null, 2);
-      } catch {
-        $("out").textContent = text;
+        const res = await fetch(base + "/query", { method: "POST", headers, body: JSON.stringify(body) });
+        const text = await res.text();
+        meta.textContent = res.ok ? "JSON · " + res.status : "Error · " + res.status;
+        try {
+          const data = JSON.parse(text);
+          $("out").textContent = JSON.stringify(data, null, 2);
+          if (res.ok) renderSelfHealTrace(data);
+          else {
+            const box = $("selfHealTrace");
+            const hint = $("traceHint");
+            if (hint) {
+              hint.style.display = "";
+              hint.textContent = "Query failed; fix the error below, then run again.";
+            }
+            if (box) box.innerHTML = `<p style="margin:0;color:var(--danger);font-size:0.875rem">${escapeHtml(String(data.detail || data.message || text).slice(0, 400))}</p>`;
+          }
+        } catch {
+          $("out").textContent = text;
+          clearSelfHealTrace("Could not parse response.");
+        }
+      } catch (e) {
+        meta.textContent = "Error";
+        $("out").textContent = String(e);
+        clearSelfHealTrace("Network or client error.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Run query";
       }
     };
   </script>

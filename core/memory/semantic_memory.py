@@ -35,16 +35,24 @@ def collection_name(user_id: str) -> str:
 
 
 def write_facts(*, user_id: str, facts: Iterable[str], source: str | None = None) -> int:
-    facts_list = [normalize_whitespace(f) for f in facts if normalize_whitespace(f)]
+    raw = [normalize_whitespace(f) for f in facts if normalize_whitespace(f)]
+    # Same verified claim can appear twice in one answer → identical chunk_id without dedupe/index.
+    facts_list: list[str] = []
+    seen: set[str] = set()
+    for f in raw:
+        if f in seen:
+            continue
+        seen.add(f)
+        facts_list.append(f)
     if not facts_list:
         return 0
 
     created_at = time.time()
     chunks: list[StoredChunk] = []
     texts: list[str] = []
-    for f in facts_list:
+    for i, f in enumerate(facts_list):
         doc_id = _cid(user_id, "semantic", f)
-        chunk_id = _cid(doc_id, str(created_at))
+        chunk_id = _cid(doc_id, str(created_at), str(i))
         meta: dict[str, Any] = {
             "user_id": user_id,
             "kind": "semantic",

@@ -36,6 +36,18 @@ class ClaimEvidence(BaseModel):
     rationale: str | None = None
 
 
+class SkippedFile(BaseModel):
+    filename: str
+    reason: str
+
+
+class IngestResponse(BaseModel):
+    collection: str
+    chunk_count: int = Field(ge=0)
+    sources: list[str] = Field(default_factory=list)
+    skipped: list[SkippedFile] = Field(default_factory=list)
+
+
 class QueryResponse(BaseModel):
     question: str
     collection: str

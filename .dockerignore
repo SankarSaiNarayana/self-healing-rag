@@ -1,0 +1,33 @@
+# Git and local env
+.git
+.gitignore
+.env
+
+# Python
+.venv
+**/__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Local data / indexes (mount or seed in prod)
+.chroma
+storage/
+data/
+
+# Editor / assistant / MCP (not needed at runtime)
+.cursor
+.claude
+.cursorrules
+.windsurfrules
+.mcp.json
+.opencode.json
+.code-review-graph
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+
+# OS / misc
+.DS_Store
+*.log

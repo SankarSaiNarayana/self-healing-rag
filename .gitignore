@@ -25,6 +25,12 @@ storage/qdrant/
 .windsurfrules
 .mcp.json
 .opencode.json
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+
+# Local code graph (MCP tool)
+.code-review-graph/
 
 # Data files
 data/

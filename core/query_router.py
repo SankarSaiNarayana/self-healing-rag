@@ -61,3 +61,8 @@ def filter_chunks_by_source_hint(chunks: list[C], hint: str) -> tuple[list[C], b
     if not filt:
         return chunks, True
     return filt, False
+
+
+def invalidate_source_list_cache() -> None:
+    """Clear cached source listings after index writes."""
+    list_unique_sources.cache_clear()

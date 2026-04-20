@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from core.classifier import classify_query
+from core.extractive_answer import synthesize_extractive_answer
 from core.hallucination_detector import ClaimCheck, verify_claims
 from core.llm import ChatMessage, LLMError, chat_complete, llm_enabled
 from core.memory.episodic_memory import format_past_questions_answer, read_episodic, write_episodic
@@ -135,10 +136,12 @@ async def _generate_answer(question: str, chunks: list[RetrievedChunk], memory_t
     warnings: list[str] = []
 
     def fallback(reason: str) -> tuple[str, bool, list[str]]:
-        ctx = "\n\n".join([f"- {normalize_whitespace(c.text)[:350]}" for c in chunks[:4]])
-        if not ctx:
+        if not chunks:
             return "I couldn't find relevant sources for that question in the collection.", False, [reason, "extractive_fallback:no_context"]
-        return f"From the available sources, here are the most relevant excerpts:\n{ctx}", False, [reason, "extractive_fallback"]
+        body = synthesize_extractive_answer(question=q, chunks=chunks)
+        if not body:
+            return "I couldn't find relevant sources for that question in the collection.", False, [reason, "extractive_fallback:no_context"]
+        return body, False, [reason, "extractive_fallback"]
 
     if not llm_enabled():
         return fallback("llm_not_configured")
