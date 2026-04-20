@@ -17,4 +17,4 @@ rapidfuzz==3.12.2
 slowapi==0.1.9
 pypdf==5.1.0
 fpdf2==2.8.2
-
+python-multipart
