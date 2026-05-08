@@ -465,14 +465,11 @@
     </header>
 
     <section class="card" aria-labelledby="conn-heading">
-      <h2 id="conn-heading">Connection</h2>
+      <h2 id="conn-heading">API key</h2>
+      <p class="field-hint">All requests use this page’s origin (same host/port as the app). Open this UI from <code>/demo</code> on your server.</p>
       <div class="field">
-        <label for="base">API base URL</label>
-        <input id="base" type="text" placeholder="Same origin if empty" autocomplete="off" />
-      </div>
-      <div class="field">
-        <label for="apiKey">API key</label>
-        <input id="apiKey" type="password" placeholder="Optional — sent as X-API-Key" autocomplete="current-password" />
+        <label for="apiKey">Optional API key</label>
+        <input id="apiKey" type="password" placeholder="Sent as X-API-Key if set" autocomplete="current-password" />
       </div>
     </section>
 
@@ -575,7 +572,9 @@
   <script>
     const $ = (id) => document.getElementById(id);
 
-    $("base").value = window.location.origin;
+    function apiBase() {
+      return window.location.origin.replace(/\/$/, "");
+    }
 
     function apiHeaders(extra) {
       const headers = { ...extra };
@@ -659,7 +658,7 @@
     }
 
     $("loadSources").onclick = async () => {
-      const base = $("base").value.replace(/\/$/, "") || "";
+      const base = apiBase();
       const col = ($("collection").value || "docs").trim();
       const sel = $("sourcePick");
       const btn = $("loadSources");
@@ -709,7 +708,7 @@
     };
 
     $("uploadBtn").onclick = async () => {
-      const base = $("base").value.replace(/\/$/, "") || "";
+      const base = apiBase();
       const col = ($("collection").value || "docs").trim();
       const inp = $("fileInput");
       const meta = $("outMeta");
@@ -750,7 +749,7 @@
     };
 
     $("go").onclick = async () => {
-      const base = $("base").value.replace(/\/$/, "") || "";
+      const base = apiBase();
       const hint = $("sourceHint").value.trim();
       const body = {
         user_id: $("userId").value || "demo",
